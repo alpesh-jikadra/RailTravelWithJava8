@@ -129,4 +129,41 @@ public class TrainReservationTest {
 		}
 		
 	}
+	
+	@Test
+	public void shouldBookTicketForGivenSourceAndDestination() throws NoTrainAvailable, NoSeatAvailable, InvalidBoardingPoint{
+		BookingRequest bookingRequest = new BookingRequest(16382,5, "Pune","Karjat");
+		Ticket bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+		
+		bookingRequest = new BookingRequest(16382,2, "Lonavala","Karjat");
+		bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+		
+		bookingRequest = new BookingRequest(16382,3, "Pune","Lonavala");
+		bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+		
+		bookingRequest = new BookingRequest(16382,5,"Lonavala","Karjat");
+		bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+		
+		bookingRequest = new BookingRequest(16382,8,"Karjat","CST");
+//		try{
+		bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+//		}catch(NoSeatAvailable e){
+//			Assert.assertEquals("No Seat Available in 16382", e.getMessage());
+//		}
+		bookingRequest = new BookingRequest(16382,2,"Karjat","CST");
+		bookSeat = bookingSystem.bookSeat(bookingRequest);
+		Assert.assertNotNull(bookSeat);
+		
+	}
+	
+	
+	@Test
+	public void shouldBookTicketIfIntermediatStationPassengerIsPresent(){
+		BookingRequest request = new BookingRequest(16382, 9);
+	}
 }

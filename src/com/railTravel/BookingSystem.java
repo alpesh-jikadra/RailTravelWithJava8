@@ -29,17 +29,21 @@ public class BookingSystem {
 	public Ticket bookSeat(BookingRequest bookingRequest) throws NoTrainAvailable, NoSeatAvailable, InvalidBoardingPoint {
 		String boardingPoint="";
 		Optional<Train> findFirst = trains.stream().filter(t -> t.getTrainNo().equals(bookingRequest.getTrainNo())).findFirst();
-		
 		if(!findFirst.isPresent()){
 			throw new NoTrainAvailable("No Train Available");
 		}
 		
 		Train train = findFirst.get();
+		String source = bookingRequest.getSource() == null ? train.getStartStation() : bookingRequest.getSource();
+		String destination = bookingRequest.getDestination() == null ? train.getEndStation() : bookingRequest.getDestination();
 		boardingPoint=train.getStops().get(0).getFromStation();
+		
 		if(train.getTotalSeats() < bookingRequest.getNoOfSeats()){
 			throw new NoSeatAvailable("No Seat Available in "+bookingRequest.getTrainNo());
 		}
-		
+		if(!isSeatAvailable(train, source, destination, bookingRequest.getNoOfSeats())){
+			throw new NoSeatAvailable("No Seat Available in "+bookingRequest.getTrainNo());
+		}
 		if(!"".equals(bookingRequest.getBoardingPoint()) && bookingRequest.getBoardingPoint()!=null){
 			
 			boardingPoint=bookingRequest.getBoardingPoint();
@@ -49,10 +53,48 @@ public class BookingSystem {
 				throw new InvalidBoardingPoint("Invalid Boarding Point");
 			}
 		}
-		train.blockSeats(bookingRequest.getNoOfSeats());
+		
+		for(TrainStop s : train.getStops()){
+			if(s.getFromStation().equals(source)){
+				s.setFromTicketCount(s.getFromTicketCount() + bookingRequest.getNoOfSeats());
+			}
+			if(s.getToStation().equals(destination) && !destination.equals(train.getEndStation())){
+				s.setToTicketCount(s.getToTicketCount()-bookingRequest.getNoOfSeats());
+			}
+		}
+//		train.blockSeats(bookingRequest.getNoOfSeats());
 		return new Ticket(bookingRequest.getTrainNo(),bookingRequest.getNoOfSeats(),boardingPoint,train.getTicketCharges()*bookingRequest.getNoOfSeats());
 			
 
+	}
+
+
+	private boolean isSeatAvailable(Train train, String source, String destination, Integer requredSeat) {
+		Integer totalSeats = train.getTotalSeats();
+		Integer totalBookedSeat = 0;
+		Integer totalEmptySeat = 0;
+		for(TrainStop s : train.getStops()){
+			
+			totalBookedSeat+=s.getFromTicketCount() ;//+ s.getToTicketCount();
+			totalEmptySeat -= s.getToTicketCount();
+			
+			/*if(s.getToStation().equals(source)){
+				//totalBookedSeat+=s.getToTicketCount();
+				break;
+			}*/
+			if(s.getFromStation().equals(source)){
+				break;
+			}
+			
+		}
+		if(totalSeats >= (totalBookedSeat - totalEmptySeat) ){
+			if(totalSeats - (totalBookedSeat - totalEmptySeat) >= requredSeat){
+				return true;
+			}
+			 
+		}
+//		return (totalSeats - totalBookedSeat )>=requredSeat;
+		return false;
 	}
 
 
